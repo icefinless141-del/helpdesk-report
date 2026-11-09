@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Helpdesk Daily Report</title>
+    <style>
+        body { font-family: sans-serif; max-width: 500px; margin: 30px auto; padding: 20px; background: #f9f9f9; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="datetime-local"], select, textarea, input[type="file"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        textarea { height: 100px; }
+        button { background: #0078d4; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-size: 16px; width: 100%; }
+        button:hover { background: #106ebe; }
+        #loading { display: none; text-align: center; color: #0078d4; margin-top: 10px; font-weight: bold; }
+        .user-badge { background: #e1dfdd; padding: 8px; border-radius: 4px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+
+    <h2>ระบบบันทึกงานรายวัน (Helpdesk)</h2>
+
+    <!-- ส่วนเลือกผู้ใช้งาน (Login จำลอง) -->
+    <div id="loginSection" class="form-group">
+        <label>เลือกชื่อผู้ใช้งาน:</label>
+        <select id="userSelect">
+            <option value="">-- กรุณาเลือกชื่อของคุณ --</option>
+            <option value="ชาญชัย จันทร์โทน">ชาญชัย จันทร์โทน</option>
+            <option value="ศณิพัฒณ์ ยิ้มเจริญ">ศณิพัฒณ์ ยิ้มเจริญ</option>
+            <option value="พรพงศ์พันธ์ ศรีจันเอี่ยม">พรพงศ์พันธ์ ศรีจันเอี่ยม</option>
+        </select>
+        <br><br>
+        <button type="button" onclick="login()">เข้าสู่ระบบ</button>
+    </div>
+
+    <!-- ส่วนฟอร์มคีย์งาน (ซ่อนไว้ก่อนจนกว่าจะล็อกอิน) -->
+    <form id="helpdeskForm" style="display: none;">
+        <div class="user-badge">
+            <span id="displayUser"></span>
+            <button type="button" onclick="logout()" style="width: auto; padding: 4px 8px; background: #a80000; font-size: 12px;">เปลี่ยนผู้ใช้</button>
+        </div>
+
+        <div class="form-group">
+            <label>วันและเวลาบันทึกงาน:</label>
+            <input type="datetime-local" id="timestamp" required>
+        </div>
+
+        <div class="form-group">
+            <label>เลขที่ Ticket (สำหรับค้นหา):</label>
+            <input type="text" id="ticket" placeholder="เช่น TCK-2026-001 หรือเว้นว่างไว้ถ้าไม่มี">
+        </div>
+
+        <div class="form-group">
+            <label>ชื่องาน / หัวข้อ:</label>
+            <input type="text" id="title" required>
+        </div>
+        <div class="form-group">
+            <label>รายละเอียดงาน:</label>
+            <textarea id="detail" required></textarea>
+        </div>
+        <div class="form-group">
+            <label>แนบรูปภาพหลักฐาน (เลือกได้หลายรูป):</label>
+            <input type="file" id="imageFiles" accept="image/*" multiple required>
+        </div>
+        <button type="submit" id="submitBtn">บันทึกส่งข้อมูลเข้า Google Drive</button>
+        <div id="loading">กำลังอัปโหลดข้อมูลและรูปภาพ กรุณารอสักครู่...</div>
+    </form>
+
+    <script>
+        // เชื่อมต่อกับ Google Apps Script Web App เรียบร้อยแล้ว
+        const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbw5_2yst_l4V-i4VcXmc1M1-XGcprzv3hpsP88IcmZqnJkO9P0NRwMAhNKTFYAMsw/exec";
+
+        let currentUser = "";
+
+        // ฟังก์ชันตั้งค่าวันและเวลาปัจจุบันในช่อง datetime-local
+        function setCurrentDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            
+            document.getElementById('timestamp').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        function login() {
+            const select = document.getElementById('userSelect');
+            if (!select.value) {
+                alert('กรุณาเลือกชื่อผู้ใช้งานก่อนครับ');
+                return;
+            }
+            currentUser = select.value;
+            document.getElementById('displayUser').innerText = 'ผู้ใช้งาน: ' + currentUser;
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('helpdeskForm').style.display = 'block';
+            
+            // ตั้งค่าวัน-เวลาปัจจุบันให้อัตโนมัติเมื่อล็อกอินเข้ามา
+            setCurrentDateTime();
+        }
+
+        function logout() {
+            currentUser = "";
+            document.getElementById('helpdeskForm').reset();
+            document.getElementById('helpdeskForm').style.display = 'none';
+            document.getElementById('loginSection').style.display = 'block';
+        }
+
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+
+        document.getElementById('helpdeskForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const timestamp = document.getElementById('timestamp').value;
+            const ticket = document.getElementById('ticket').value;
+            const title = document.getElementById('title').value;
+            const detail = document.getElementById('detail').value;
+            const fileInput = document.getElementById('imageFiles');
+            
+            if (fileInput.files.length === 0) {
+                return alert('กรุณาเลือกรูปภาพหลักฐานอย่างน้อย 1 รูป');
+            }
+
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('loading').style.display = 'block';
+
+            try {
+                // แปลงไฟล์ทุกรูปเป็น Base64 เก็บไว้ใน Array
+                const filesArray = [];
+                for (let i = 0; i < fileInput.files.length; i++) {
+                    const file = fileInput.files[i];
+                    const base64Data = await toBase64(file);
+                    filesArray.push({
+                        filename: file.name,
+                        filedata: base64Data
+                    });
+                }
+
+                const payload = {
+                    timestamp: timestamp,
+                    ticket: ticket,
+                    user: currentUser,
+                    title: title,
+                    detail: detail,
+                    files: filesArray
+                };
+
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    alert('บันทึกงานและอัปโหลดรูปภาพสำเร็จ!');
+                    document.getElementById('helpdeskForm').reset();
+                    document.getElementById('helpdeskForm').style.display = 'none';
+                    document.getElementById('loginSection').style.display = 'block';
+                } else {
+                    alert('เกิดข้อผิดพลาดในการส่งข้อมูล');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+            } finally {
+                document.getElementById('submitBtn').disabled = false;
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
