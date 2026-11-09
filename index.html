@@ -2,17 +2,79 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Helpdesk Daily Report</title>
     <style>
-        body { font-family: sans-serif; max-width: 500px; margin: 30px auto; padding: 20px; background: #f9f9f9; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="datetime-local"], select, textarea, input[type="file"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        textarea { height: 100px; }
-        button { background: #0078d4; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-size: 16px; width: 100%; }
-        button:hover { background: #106ebe; }
-        #loading { display: none; text-align: center; color: #0078d4; margin-top: 10px; font-weight: bold; }
-        .user-badge { background: #e1dfdd; padding: 8px; border-radius: 4px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        body { 
+            font-family: sans-serif; 
+            max-width: 600px; 
+            margin: 15px auto; 
+            padding: 15px; 
+            background: #f9f9f9; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+        }
+        h2 {
+            font-size: 22px;
+            text-align: center;
+            color: #333;
+        }
+        .form-group { 
+            margin-bottom: 20px; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: bold; 
+            font-size: 16px;
+            color: #333;
+        }
+        /* ขยายขนาดช่องกรอกข้อมูลและปุ่มเลือกให้ใหญ่ขึ้นเพื่อจิ้มบนมือถือได้ง่าย */
+        input[type="text"], input[type="datetime-local"], select, textarea, input[type="file"] { 
+            width: 100%; 
+            padding: 12px; 
+            box-sizing: border-box; 
+            border: 1px solid #ccc; 
+            border-radius: 6px; 
+            font-size: 16px; 
+            background: #fff;
+        }
+        textarea { 
+            height: 120px; 
+        }
+        button { 
+            background: #0078d4; 
+            color: white; 
+            border: none; 
+            padding: 14px 15px; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            font-size: 18px; 
+            width: 100%; 
+            font-weight: bold;
+        }
+        button:hover { 
+            background: #106ebe; 
+        }
+        #loading { 
+            display: none; 
+            text-align: center; 
+            color: #0078d4; 
+            margin-top: 15px; 
+            font-weight: bold; 
+            font-size: 16px;
+        }
+        .user-badge { 
+            background: #e1dfdd; 
+            padding: 12px; 
+            border-radius: 6px; 
+            margin-bottom: 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-size: 16px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -36,7 +98,7 @@
     <form id="helpdeskForm" style="display: none;">
         <div class="user-badge">
             <span id="displayUser"></span>
-            <button type="button" onclick="logout()" style="width: auto; padding: 4px 8px; background: #a80000; font-size: 12px;">เปลี่ยนผู้ใช้</button>
+            <button type="button" onclick="logout()" style="width: auto; padding: 6px 12px; background: #a80000; font-size: 14px;">เปลี่ยนผู้ใช้</button>
         </div>
 
         <div class="form-group">
