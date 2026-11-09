@@ -20,66 +20,20 @@
             border-radius: 8px; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
         }
-        h2 {
-            font-size: 22px;
-            text-align: center;
-            color: #333;
-        }
-        .form-group { 
-            margin-bottom: 20px; 
-        }
-        label { 
-            display: block; 
-            margin-bottom: 8px; 
-            font-weight: bold; 
-            font-size: 16px;
-            color: #333;
-        }
-        /* ขยายขนาดช่องกรอกข้อมูลและปุ่มเลือกให้ใหญ่ขึ้นเพื่อจิ้มบนมือถือได้ง่าย */
+        h2 { font-size: 22px; text-align: center; color: #333; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 16px; color: #333; }
         input[type="text"], input[type="datetime-local"], select, textarea, input[type="file"] { 
-            width: 100%; 
-            padding: 12px; 
-            box-sizing: border-box; 
-            border: 1px solid #ccc; 
-            border-radius: 6px; 
-            font-size: 16px; 
-            background: #fff;
+            width: 100%; padding: 12px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; background: #fff;
         }
-        textarea { 
-            height: 120px; 
-        }
+        textarea { height: 120px; }
         button { 
-            background: #0078d4; 
-            color: white; 
-            border: none; 
-            padding: 14px 15px; 
-            cursor: pointer; 
-            border-radius: 6px; 
-            font-size: 18px; 
-            width: 100%; 
-            font-weight: bold;
+            background: #0078d4; color: white; border: none; padding: 14px 15px; cursor: pointer; border-radius: 6px; font-size: 18px; width: 100%; font-weight: bold;
         }
-        button:hover { 
-            background: #106ebe; 
-        }
-        #loading { 
-            display: none; 
-            text-align: center; 
-            color: #0078d4; 
-            margin-top: 15px; 
-            font-weight: bold; 
-            font-size: 16px;
-        }
+        button:hover { background: #106ebe; }
+        #loading { display: none; text-align: center; color: #0078d4; margin-top: 15px; font-weight: bold; font-size: 16px; }
         .user-badge { 
-            background: #e1dfdd; 
-            padding: 12px; 
-            border-radius: 6px; 
-            margin-bottom: 20px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            font-size: 16px;
-            font-weight: bold;
+            background: #e1dfdd; padding: 12px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: bold;
         }
     </style>
 </head>
@@ -87,7 +41,7 @@
 
     <h2>ระบบบันทึกงานรายวัน (Helpdesk)</h2>
 
-    <!-- ส่วนเลือกผู้ใช้งาน (Login จำลอง) -->
+    <!-- ส่วนเลือกผู้ใช้งาน -->
     <div id="loginSection" class="form-group">
         <label>เลือกชื่อผู้ใช้งาน:</label>
         <select id="userSelect">
@@ -100,7 +54,7 @@
         <button type="button" onclick="login()">เข้าสู่ระบบ</button>
     </div>
 
-    <!-- ส่วนฟอร์มคีย์งาน (ซ่อนไว้ก่อนจนกว่าจะล็อกอิน) -->
+    <!-- ส่วนฟอร์มคีย์งาน -->
     <form id="helpdeskForm" style="display: none;">
         <div class="user-badge">
             <span id="displayUser"></span>
@@ -109,12 +63,12 @@
 
         <div class="form-group">
             <label>วันและเวลาบันทึกงาน:</label>
-            <input type="datetime-local" id="timestamp" required>
+            <input type="datetime-local" id="timestamp" required onchange="updateTicketPrefix()">
         </div>
 
         <div class="form-group">
-            <label>เลขที่ Ticket (สำหรับค้นหา):</label>
-            <input type="text" id="ticket" placeholder="เช่น TCK-2026-001 หรือเว้นว่างไว้ถ้าไม่มี">
+            <label>เลขที่ Ticket:</label>
+            <input type="text" id="ticket" placeholder="พิมพ์เฉพาะเลข 4 ตัวท้าย เช่น 8792" required>
         </div>
 
         <div class="form-group">
@@ -134,12 +88,43 @@
     </form>
 
     <script>
-        // เชื่อมต่อกับ Google Apps Script Web App เรียบร้อยแล้ว
-        const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyfvv9I0F_fu_GlM5QAq2FKq_P1T0f2NBge-X-VcnEYMHdHSkSPkclxRI81_u-vKpwj/exec";
+        // กำหนด URL ของแต่ละคน (รองรับการใช้งานร่วมกับเพื่อนร่วมงาน)
+        const USER_WEBHOOKS = {
+            "ชาญชัย จันทร์โทน": "https://script.google.com/macros/s/AKfycbyfvv9I0F_fu_GlM5QAq2FKq_P1T0f2NBge-X-VcnEYMHdHSkSPkclxRI81_u-vKpwj/exec",
+            "ศณิพัฒณ์ ยิ้มเจริญ": "https://script.google.com/macros/s/ใส่URLของศณิพัฒณ์ตรงนี้/exec",
+            "พรพงศ์พันธ์ ศรีจันเอี่ยม": "https://script.google.com/macros/s/ใส่URLของพรพงศ์พันธ์ตรงนี้/exec"
+        };
 
         let currentUser = "";
+        let currentWebhookUrl = "";
+        let ticketPrefix = ""; // ตัวเก็บรูปแบบ Prefix เช่น BK-20261109-
 
-        // ฟังก์ชันตั้งค่าวันและเวลาปัจจุบันในช่อง datetime-local
+        // ฟังก์ชันอัปเดต Prefix อัตโนมัติตามวันที่เลือก
+        function updateTicketPrefix() {
+            const val = document.getElementById('timestamp').value;
+            if (!val) return;
+            
+            const datePart = val.split('T')[0]; // ได้รูปแบบ YYYY-MM-DD เช่น 2026-11-09
+            const parts = datePart.split('-');
+            const year = parts[0];
+            const month = parts[1];
+            const day = parts[2];
+            
+            ticketPrefix = `BK-${year}${month}${day}-`;
+            
+            // ดึงค่าเลขท้ายเดิมที่ผู้ใช้เคยพิมพ์ไว้ (ถ้ามี) มาต่อท้าย
+            const ticketInput = document.getElementById('ticket');
+            let currentVal = ticketInput.value;
+            
+            // ถ้าในช่องมี Prefix เดิมอยู่ ให้ตัดออกก่อนแล้วใส่ใหม่ หรือถ้าว่างให้ใส่ Prefix รอไว้
+            if (currentVal.includes('-')) {
+                const lastDigits = currentVal.split('-').pop();
+                ticketInput.value = ticketPrefix + lastDigits;
+            } else {
+                ticketInput.value = ticketPrefix + currentVal;
+            }
+        }
+
         function setCurrentDateTime() {
             const now = new Date();
             const year = now.getFullYear();
@@ -149,6 +134,7 @@
             const minutes = String(now.getMinutes()).padStart(2, '0');
             
             document.getElementById('timestamp').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            updateTicketPrefix(); // เรียกสร้าง Prefix ทันที
         }
 
         function login() {
@@ -158,16 +144,18 @@
                 return;
             }
             currentUser = select.value;
+            currentWebhookUrl = USER_WEBHOOKS[currentUser];
+
             document.getElementById('displayUser').innerText = 'ผู้ใช้งาน: ' + currentUser;
             document.getElementById('loginSection').style.display = 'none';
             document.getElementById('helpdeskForm').style.display = 'block';
             
-            // ตั้งค่าวัน-เวลาปัจจุบันให้อัตโนมัติเมื่อล็อกอินเข้ามา
             setCurrentDateTime();
         }
 
         function logout() {
             currentUser = "";
+            currentWebhookUrl = "";
             document.getElementById('helpdeskForm').reset();
             document.getElementById('helpdeskForm').style.display = 'none';
             document.getElementById('loginSection').style.display = 'block';
@@ -184,11 +172,16 @@
             e.preventDefault();
             
             const timestamp = document.getElementById('timestamp').value;
-            const ticket = document.getElementById('ticket').value;
+            let ticket = document.getElementById('ticket').value.trim();
             const title = document.getElementById('title').value;
             const detail = document.getElementById('detail').value;
             const fileInput = document.getElementById('imageFiles');
             
+            // ถ้าผู้ใช้พิมพ์มาแต่เลขท้าย ให้เติม Prefix วันที่เข้าไปให้สมบูรณ์ก่อนส่ง
+            if (!ticket.startsWith('BK-')) {
+                ticket = ticketPrefix + ticket;
+            }
+
             if (fileInput.files.length === 0) {
                 return alert('กรุณาเลือกรูปภาพหลักฐานอย่างน้อย 1 รูป');
             }
@@ -197,7 +190,6 @@
             document.getElementById('loading').style.display = 'block';
 
             try {
-                // แปลงไฟล์ทุกรูปเป็น Base64 เก็บไว้ใน Array
                 const filesArray = [];
                 for (let i = 0; i < fileInput.files.length; i++) {
                     const file = fileInput.files[i];
@@ -217,7 +209,7 @@
                     files: filesArray
                 };
 
-                const response = await fetch(WEBHOOK_URL, {
+                const response = await fetch(currentWebhookUrl, {
                     method: 'POST',
                     body: JSON.stringify(payload)
                 });
@@ -239,7 +231,6 @@
             }
         });
 
-        // ลงทะเบียน Service Worker สำหรับ PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
