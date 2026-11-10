@@ -23,7 +23,7 @@
         h2 { font-size: 22px; text-align: center; color: #333; }
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 16px; color: #333; }
-        input[type="text"], input[type="datetime-local"], select, textarea, input[type="file"] { 
+        input[type="text"], input[type="datetime-local"], input[type="time"], select, textarea, input[type="file"] { 
             width: 100%; padding: 12px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; background: #fff;
         }
         textarea { height: 120px; }
@@ -95,8 +95,26 @@
             <label>เลขที่ Ticket (เว้นว่างได้ถ้าไม่มี):</label>
             <div class="ticket-input-group">
                 <span class="ticket-prefix-badge" id="ticketPrefixDisplay">BK-YYYYMMDD-</span>
-                <!-- เอาคำว่า required ออกเพื่อให้เว้นว่างได้ -->
                 <input type="text" id="ticketSuffix" placeholder="เช่น 8792 (ถ้ามี)">
+            </div>
+        </div>
+
+        <!-- ส่วนเลือก OT (ล่วงเวลา) -->
+        <div class="form-group" style="background: #eef6fc; padding: 15px; border-radius: 6px; border: 1px dashed #0078d4;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 0;">
+                <input type="checkbox" id="isOT" onchange="toggleOTFields()" style="width: 20px; height: 20px;">
+                <span style="color: #0078d4; font-size: 16px;">เป็นการทำ OT (ล่วงเวลา)</span>
+            </label>
+            
+            <div id="otTimeSection" style="display: none; margin-top: 12px; gap: 10px;">
+                <div style="flex: 1;">
+                    <label style="font-size: 14px; font-weight: normal;">เวลาเริ่ม OT:</label>
+                    <input type="time" id="otStart">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 14px; font-weight: normal;">เวลาเลิก OT:</label>
+                    <input type="time" id="otEnd">
+                </div>
             </div>
         </div>
 
@@ -126,6 +144,11 @@
         let currentUser = "";
         let currentWebhookUrl = "";
         let currentPrefix = "";
+
+        function toggleOTFields() {
+            const isChecked = document.getElementById('isOT').checked;
+            document.getElementById('otTimeSection').style.display = isChecked ? 'flex' : 'none';
+        }
 
         function updateTicketPrefix() {
             const val = document.getElementById('timestamp').value;
@@ -173,6 +196,8 @@
             currentUser = "";
             currentWebhookUrl = "";
             document.getElementById('helpdeskForm').reset();
+            document.getElementById('isOT').checked = false;
+            toggleOTFields();
             document.getElementById('helpdeskForm').style.display = 'none';
             document.getElementById('loginSection').style.display = 'block';
         }
@@ -190,12 +215,19 @@
             const timestamp = document.getElementById('timestamp').value;
             const suffix = document.getElementById('ticketSuffix').value.trim();
             
-            // เช็คว่าถ้าไม่ได้กรอกเลขท้าย ให้ส่งค่าเป็นค่าว่าง (-) หรือ "-" แทน แต่ถ้ากรอกให้รวมร่าง Prefix
             let fullTicket = "";
             if (suffix !== "") {
                 fullTicket = currentPrefix + suffix;
             } else {
-                fullTicket = "-"; // หรือจะปล่อยว่าง "" ตามสะดวกครับ
+                fullTicket = "-";
+            }
+
+            const isOT = document.getElementById('isOT').checked;
+            const otStart = document.getElementById('otStart').value;
+            const otEnd = document.getElementById('otEnd').value;
+
+            if (isOT && (!otStart || !otEnd)) {
+                return alert('กรุณากำหนดเวลาเริ่มและเวลาเลิก OT ให้ครบถ้วนครับ');
             }
 
             const title = document.getElementById('title').value;
@@ -226,6 +258,8 @@
                     user: currentUser,
                     title: title,
                     detail: detail,
+                    isOT: isOT,
+                    otTime: isOT ? `${otStart} - ${otEnd}` : "-",
                     files: filesArray
                 };
 
@@ -237,6 +271,8 @@
                 if (response.ok) {
                     alert('บันทึกงานและอัปโหลดรูปภาพสำเร็จ!');
                     document.getElementById('helpdeskForm').reset();
+                    document.getElementById('isOT').checked = false;
+                    toggleOTFields();
                     document.getElementById('helpdeskForm').style.display = 'none';
                     document.getElementById('loginSection').style.display = 'block';
                 } else {
