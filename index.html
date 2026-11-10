@@ -56,13 +56,54 @@
             background: #0078d4; color: white; border: none; padding: 14px 15px; cursor: pointer; border-radius: 6px; font-size: 18px; width: 100%; font-weight: bold;
         }
         button:hover { background: #106ebe; }
-        #loading { display: none; text-align: center; color: #0078d4; margin-top: 15px; font-weight: bold; font-size: 16px; }
+        
         .user-badge { 
             background: #e1dfdd; padding: 12px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: bold;
+        }
+
+        /* Loading Overlay Style */
+        #loadingOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .spinner {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #0078d4;
+            border-radius: 50%;
+            width: 55px;
+            height: 55px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-text {
+            color: white;
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            font-family: sans-serif;
         }
     </style>
 </head>
 <body>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text">กำลังอัปโหลดข้อมูลและรูปภาพ<br>กรุณารอสักครู่...</div>
+    </div>
 
     <h2>ระบบบันทึกงานรายวัน (Helpdesk)</h2>
 
@@ -131,7 +172,6 @@
             <input type="file" id="imageFiles" accept="image/*" multiple required>
         </div>
         <button type="submit" id="submitBtn">บันทึกส่งข้อมูลเข้า Google Drive</button>
-        <div id="loading">กำลังอัปโหลดข้อมูลและรูปภาพ กรุณารอสักครู่...</div>
     </form>
 
     <script>
@@ -238,8 +278,9 @@
                 return alert('กรุณาเลือกรูปภาพหลักฐานอย่างน้อย 1 รูป');
             }
 
+            // เปิดแสดงหน้าต่าง Loading ทับหน้าจอ
+            document.getElementById('loadingOverlay').style.display = 'flex';
             document.getElementById('submitBtn').disabled = true;
-            document.getElementById('loading').style.display = 'block';
 
             try {
                 const filesArray = [];
@@ -282,8 +323,9 @@
                 console.error('Error:', error);
                 alert('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
             } finally {
+                // ปิดหน้าต่าง Loading และเปิดใช้งานปุ่มอีกครั้ง
+                document.getElementById('loadingOverlay').style.display = 'none';
                 document.getElementById('submitBtn').disabled = false;
-                document.getElementById('loading').style.display = 'none';
             }
         });
 
